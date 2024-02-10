@@ -1,5 +1,5 @@
 # css432-tftp
 Name: {Replace with your name}
-## A tftp client and server over UDP [Part 1]
-* Transfer (read/write) small files
-* Transfer (read/write) large files
+## A tftp client and server over UDP [Part 2]
+* Handle error case
+* Handle timeout and retransmission (server side)
