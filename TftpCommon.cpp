@@ -44,6 +44,14 @@ static int registerTimeoutHandler( ){
 }
 
 /*
+ * Useful things:
+ * alarm(1) // set timer for 1 sec
+ * alarm(0) // clear timer
+ * std::this_thread::sleep_for(std::chrono::milliseconds(200)); // slow down transmission
+ */
+
+
+/*
  * TODO: Add common code that is shared between your server and your client here. For example: helper functions for
  * sending bytes, receiving bytes, parse opcode from a tftp packet, parse data block/ack number from a tftp packet,
  * create a data block/ack packet, and the common "process the file transfer" logic.
