@@ -6,9 +6,15 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstdlib>
+include <csignal>
+#include <chrono>
+#include <thread>
 #include "TftpError.h"
 #include "TftpOpcode.h"
 #include "TftpConstant.h"
+
+// To track how retransmit/retry has occurred.
+static int retryCount = 0;
 
 // Helper function to print the first len bytes of the buffer in Hex
 static void printBuffer(const char * buffer, unsigned int len) {
@@ -16,6 +22,25 @@ static void printBuffer(const char * buffer, unsigned int len) {
         printf("%x,", buffer[i]);
     }
     printf("\n");
+}
+
+// increment retry count when timeout occurs. 
+static void handleTimeout(int signum ){
+    retryCount++;
+    printf("timeout occurred! count %d\n", retryCount);
+}
+
+static int registerTimeoutHandler( ){
+    signal(SIGALRM, handleTimeout);
+
+    /* disable the restart of system call on signal. otherwise the OS will be stuck in
+     * the system call
+     */
+    if( siginterrupt( SIGALRM, 1 ) == -1 ){
+        printf( "invalid sig number.\n" );
+        return -1;
+    }
+    return 0;
 }
 
 /*
