@@ -1,5 +1,8 @@
 #!/bin/bash
 
+eval `ssh-agent -s`
+ssh-add - <<< '${{ secrets.PART2_STARTER_CODE_KEY }}'
+
 git remote add teacher-upstream https://github.com/uwb-bopan-c/assignment-tftp-server-and-client-part2.git
 git fetch teacher-upstream main:teacher-main
 
