@@ -18,6 +18,12 @@ jobs:
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v4
+
+    - name: webfactory/ssh-agent
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY_WEBFACTORY }}         
+        
     - name: Check no change to .github
       run: bash .github/workflows/check_no_change.sh
 
