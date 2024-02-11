@@ -27,6 +27,12 @@ jobs:
     - name: Check no change to .github
       run: bash .github/workflows/check_no_change.sh
 
+    - name: Checkout tools
+      uses: actions/checkout@v4
+      with:
+        repository: uwb-bopan-c/assignment-tftp-server-and-client-part2
+        path: my-tools
+        
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
