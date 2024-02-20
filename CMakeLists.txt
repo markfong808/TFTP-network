@@ -7,6 +7,7 @@ enable_testing()
 configure_file(.github/workflows/TestCommon.sh TestCommon.sh COPYONLY)
 configure_file(.github/workflows/TestSmallFiles.sh TestSmallFiles.sh COPYONLY)
 configure_file(.github/workflows/TestLargeFiles.sh TestLargeFiles.sh COPYONLY)
+configure_file(.github/workflows/TestErrorHandling.sh TestErrorHandling.sh COPYONLY)
 
 file(COPY .github/workflows/server-files DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY .github/workflows/client-files DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
