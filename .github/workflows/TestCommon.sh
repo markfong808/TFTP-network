@@ -143,3 +143,31 @@ test_memory_leak_continuous () {
   done
   sleep 1
 }
+
+test_file_transfer_timeout () {
+  local mode=$1 && shift
+  local src_dir=$1 && shift
+  local dest_dir=$1 && shift
+  local filename=$1 && shift
+
+  echo -e "${BLUE}Test: Transfer $filename from $src_dir to $dest_dir${NC}"
+  rm -f "$dest_dir/$filename" # ensure file does not exist before transfer
+
+  echo "Starting server."
+  ./tftp-server | tee server.log 2>&1 &
+  sleep 2 # ensure server has started and ready
+
+  cd ../css432-tftp/build || exit
+  echo "Starting test client."
+  ./tftp-client "$mode" "$filename" | tee client.log 2>&1
+  kill "$(jobs -p)"
+
+  mv client.log ../../build/
+  mv client-files/server-to-client-large.txt ../../build/client-files/ 2>/dev/null
+  cd ../../build || exit
+  print_log server.log
+  print_log client.log
+
+  compare_files "$mode" "$src_dir/$filename" "$dest_dir/$filename"
+  rm "$dest_dir/$filename" # clean up
+}
