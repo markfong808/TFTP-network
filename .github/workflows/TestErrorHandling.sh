@@ -24,7 +24,7 @@ check_result () {
 echo -e "${BLUE}Test: handle illegal tftp operation.${NC}"
 cd build || exit
 echo "Starting server."
-./tftp-server > server.log 2>&1 &
+./tftp-server | tee server.log 2>&1 &
 sleep 2
 cd ../css432-tftp/build || exit
 echo "Starting test client."
