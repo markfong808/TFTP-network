@@ -103,6 +103,7 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: bash TestLargeFiles.sh disable_timeout
 
-    - name: Intentionally fail until auto grade is ready
-      if: ${{ always() }}
-      run: exit 1
+    - name: Test timeout (enabled)
+      working-directory: ${{github.workspace}}/build
+      run: bash TestLargeFiles.sh enable_timeout
+

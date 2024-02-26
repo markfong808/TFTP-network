@@ -47,3 +47,7 @@ if [ "$1" == "disable_timeout" ]; then
   test_file_transfer_timeout 'w' "$CLIENT_DIR" "$SERVER_DIR" "client-to-server-large.txt"
 fi
 
+if [ "$1" == "enable_timeout" ]; then
+  test_file_transfer_timeout_enabled 'r' "$SERVER_DIR" "$CLIENT_DIR" "server-to-client-large.txt"
+  test_file_transfer_timeout_enabled 'w' "$CLIENT_DIR" "$SERVER_DIR" "client-to-server-large.txt"
+fi
