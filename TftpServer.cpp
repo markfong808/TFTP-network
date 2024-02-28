@@ -65,15 +65,14 @@ int handleIncomingRequest(int sockfd) {
 
             // Print the extracted filename and mode
             std::cout << "Requested filename is: " << filename << std::endl;
-            // std::cout << "Mode: " << mode << std::endl;
-            //  Check if the file exists
+            //std::cout << "Mode: " << mode << std::endl;            
+            
             int packet = 1;
             unsigned short blockNumber = 1;
             char Data_buffer[MAX_PACKET_LEN];
             // creating full path
             std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
-            std::cout << "Full path: " << filePath << std::endl;
-
+            //std::cout << "Full path: " << filePath << std::endl;            
             std::ifstream file(filePath, std::ios::binary);
 
             while (true)
@@ -85,7 +84,7 @@ int handleIncomingRequest(int sockfd) {
                 std::cout << "Requested File chunk size " << bytesRead << std::endl; // 7465 bytes for large.txt
                 std::cout << "Creating Packet No. " << packet++ << std::endl;
                 createDataPacket(Data_buffer, blockNumber, bytesRead, pos);
-                printBuffer(Data_buffer, MAX_PACKET_LEN);
+                //printBuffer(Data_buffer, MAX_PACKET_LEN);
                 size_t BytesSend = sendto(sockfd, Data_buffer, 4 + bytesRead, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
                 pos += bytesRead;
                 blockNumber++;
@@ -103,7 +102,31 @@ int handleIncomingRequest(int sockfd) {
             strncpy(filename, buffer + 2, 255);
             strncpy(mode, buffer + 2 + strlen(filename) + 1, 10);
             std::cout << "Requested filename is: " << filename << std::endl;
-
+            //  Check the filename first to see if it is already existed in the path
+            std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
+            std::cout << "Full path: " << filePath << std::endl;
+            
+            char ErrorMsgbuffer[MAX_PACKET_LEN];
+            unsigned short errorcode = 6;
+            bool error = false;
+            if(access(filePath.c_str(),F_OK) != -1){
+                // File already exists, handle accordingly
+                std::cout << "File already exists!" << std::endl;
+                const char *errorMessage = "File already exists: ";
+                error = true;
+                size_t errorMsgLength = strlen(errorMessage);
+                const size_t filePathLength = filePath.size();
+                const size_t totalLength = errorMsgLength + filePathLength + 1;
+                strncpy(ErrorMsgbuffer + 4 ,errorMessage,errorMsgLength);
+                strncpy(ErrorMsgbuffer + 4 + errorMsgLength + 1, filePath.c_str(),filePathLength);
+                ErrorMsgbuffer[4 + errorMsgLength + filePathLength + 1] = '\0'; // Null-terminate the string
+                createErrorPacket(ErrorMsgbuffer,errorcode,totalLength);
+                size_t BytesSend = sendto(sockfd, ErrorMsgbuffer, 4 + totalLength + 1, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+                // printBuffer(ErrorMsgbuffer, MAX_PACKET_LEN);
+                // std::string errMsg = parseErrMsg(ErrorMsgbuffer, BytesSend);
+                // std::cout << "Error msg: " << errMsg << std::endl;
+            } else { //Proceed to receive
+             
             // send ack
             int Ack = 0;
             // char Ackbuffer[TFTP_ACK];
@@ -113,12 +136,12 @@ int handleIncomingRequest(int sockfd) {
 
             bool last_packet_received = false;
             char receiver[MAX_PACKET_LEN]; // receive to store the incoming data
-#define MAX_DATA_SIZE 512
+            #define MAX_DATA_SIZE 512
             size_t BytesReceived = 0;
             for (;;)
             {
                 do
-                { // receiving from client
+                { // start receiving from client
                     size_t BytesReceived = recvfrom(sockfd, receiver, MAX_PACKET_LEN, 0, (struct sockaddr *)&cli_addr, &addrlen);
                     std::cout << "Bytes_received: " << BytesReceived << std::endl;
                     // printBuffer(receiver, MAX_PACKET_LEN);
@@ -156,7 +179,8 @@ int handleIncomingRequest(int sockfd) {
                 {
                     break;
                 }
-            }
+            } //infinite loop end
+          } //else statement end
         }
         else if (opcode == TFTP_ACK)
         {

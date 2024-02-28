@@ -104,63 +104,92 @@ static uint16_t parseOpcode(const char *buffer)
 //     return data_buffer;
 // }
 
-// // Helper function to parse data block number from a TFTP data packet
-static int parseBlockNumber(const char *buffer)
+static std::string parseErrMsg(const char (&buffer)[MAX_PACKET_LEN], const int &num_bytes_recv)
 {
-    // Parse the blocknumber from the Data packet
-    unsigned short block;
-    memcpy(&block, &buffer[2], sizeof(unsigned short)); // Extract block number
-    block = ntohs(block);
-
-    return block;
+    //(buffer + 4, num_bytes_recv - 4);
+    return std::string(buffer + 4, num_bytes_recv - 4);
 }
 
-// Helper function to parse Ack number from a TFTP ACK packet
-static int parseAckNumber(const char *buffer)
-{
-    // Parse the blocknumber from the Data packet
-    unsigned short ack;
-    memcpy(&ack, &buffer[2], sizeof(unsigned short)); // Extract ack num
-    ack = ntohs(ack);
+    // // Helper function to parse data block number from a TFTP data packet
+    static int parseBlockNumber(const char *buffer)
+    {
+        // Parse the blocknumber from the Data packet
+        unsigned short block;
+        memcpy(&block, &buffer[2], sizeof(unsigned short)); // Extract block number
+        block = ntohs(block);
 
-    return ack;
-}
-// Helper function to create a TFTP Data packet
-static void createDataPacket(char *buffer, unsigned short blockNumber, size_t bytes, char *Pos)
-{
+        return block;
+    }
 
-    char *bpt = buffer;                                  // point to the beginning of the buffer
-    unsigned short *opCode = (unsigned short *)bpt;      // opCode points to the beginning of the buffer
-    *opCode = htons(TFTP_DATA);                          // fill in op code for packet.
-    unsigned short *block = (unsigned short *)(bpt + 2); // move bpt towards right by 2 bytes
-    *block = htons(blockNumber);                         // fill in block number
-    bpt = bpt + 4;                                       // pointer to the beginning of the actual file data
-    std::memcpy(bpt, Pos, bytes);
-    bpt += bytes;
-    // file.close();
-}
+    // Helper function to parse Ack number from a TFTP ACK packet
+    static int parseAckNumber(const char *buffer)
+    {
+        // Parse the blocknumber from the Data packet
+        unsigned short ack;
+        memcpy(&ack, &buffer[2], sizeof(unsigned short)); // Extract ack num
+        ack = ntohs(ack);
 
-// // Helper function to create a TFTP ACK packet
-static void createAckPacket(uint16_t opcode, int blockNumber, char *buffer)
-{
-    // char Ackbuffer[TFTP_ACK];
-    char *bpt = buffer;
-    unsigned short *opCode = (unsigned short *)bpt;
-    *opCode = htons(TFTP_ACK); // Change the Opcode as ACK type
-    bpt += 2;                  // now points to block field
-    unsigned short *block = (unsigned short *)bpt;
-    *block = htons(blockNumber);
-    opcode = TFTP_ACK;
-}
+        return ack;
+    }
 
-static void writeFile(const std::string &filename, char (&filebuffer)[MAX_PACKET_LEN], const int &num_bytes_recv)
-{
-    std::ofstream outputFile(filename, std::ios::app | std::ios::out | std::ios::binary);
-    outputFile.write(filebuffer + 4, num_bytes_recv - 4);
-    outputFile.close();
-}
+    // Helper function to parse Ack number from a TFTP Error packet
+    static int parseErrorCode(const char *buffer)
+    {
+        // Parse the errorcode from the Data packet
+        unsigned short error;
+        memcpy(&error, &buffer[2], sizeof(unsigned short)); // Extract error code
+        error = ntohs(error);
 
-// static long FetchBytes(const char *buffer, long bytes)
-// {
-//     return static_cast<long>(bytes);
-// }
+        return error;
+    }
+    // Helper function to create a TFTP Data packet
+    static void createDataPacket(char *buffer, unsigned short blockNumber, size_t bytes, char *Pos)
+    {
+
+        char *bpt = buffer;                                  // point to the beginning of the buffer
+        unsigned short *opCode = (unsigned short *)bpt;      // opCode points to the beginning of the buffer
+        *opCode = htons(TFTP_DATA);                          // fill in op code for packet.
+        unsigned short *block = (unsigned short *)(bpt + 2); // move bpt towards right by 2 bytes
+        *block = htons(blockNumber);                         // fill in block number
+        bpt = bpt + 4;                                       // pointer to the beginning of the actual file data
+        std::memcpy(bpt, Pos, bytes);
+        bpt += bytes;
+    }
+
+    // // Helper function to create a TFTP ACK packet
+    static void createAckPacket(uint16_t opcode, int blockNumber, char *buffer)
+    {
+        char *bpt = buffer;
+        unsigned short *opCode = (unsigned short *)bpt;
+        *opCode = htons(TFTP_ACK); // Change the Opcode as ACK type
+        bpt += 2;                  // now points to block field
+        unsigned short *block = (unsigned short *)bpt;
+        *block = htons(blockNumber);
+        opcode = TFTP_ACK;
+    }
+
+    static void writeFile(const std::string &filename, char(&filebuffer)[MAX_PACKET_LEN], const int &num_bytes_recv)
+    {
+        std::ofstream outputFile(filename, std::ios::app | std::ios::out | std::ios::binary);
+        outputFile.write(filebuffer + 4, num_bytes_recv - 4);
+        outputFile.close();
+    }
+
+    // Helper function to create a TFTP Error packet
+    static void createErrorPacket(char *buffer, unsigned short errorcode, size_t bytes)
+    {
+        char *bpt = buffer;
+        unsigned short *opCode = (unsigned short *)bpt;
+        *opCode = htons(TFTP_ERROR);
+        unsigned short *ErrorCode = (unsigned short *)(bpt + 2);
+        *ErrorCode = htons(errorcode);
+        bpt = bpt + 4;
+
+        std::memcpy(bpt, buffer + 4, bytes - 1);
+        bpt += strlen(buffer) + 1;
+    }
+
+    // static long FetchBytes(const char *buffer, long bytes)
+    // {
+    //     return static_cast<long>(bytes);
+    // }

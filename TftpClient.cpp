@@ -95,7 +95,6 @@ int main(int argc, char *argv[]) {
         unsigned short *opCode = (unsigned short *)bpt; // opCode points to the beginning of the buffer
         *opCode = htons(TFTP_RRQ);                      // fill in op code for packet.
         bpt += 2;
-        // unsigned short *filename = (unsigned short *)(bpt + 2);
         char requested_filename[255];
         size_t filenameLength = strlen(filename);
         // std::cout << "Requested filename: " << filename << std::endl;
@@ -160,7 +159,7 @@ int main(int argc, char *argv[]) {
      */
     std::cout << "Processing tftp request..." << std::endl;
 
-#define MAX_DATA_SIZE 512
+    #define MAX_DATA_SIZE 512
     bool last_packet_received = false;
     bool last_packet_sent = false;
     char receiver[MAX_PACKET_LEN]; // receive to store the incoming data
@@ -170,6 +169,19 @@ int main(int argc, char *argv[]) {
     { // WRQ
 
         size_t BytesReceived = recvfrom(sockfd, receiver, MAX_PACKET_LEN, 0, (struct sockaddr *)&serv_addr, &serv_addrlen);
+        printBuffer(receiver, sizeof(receiver));
+        uint16_t opcode = parseOpcode(receiver);
+        
+        if (opcode == TFTP_ERROR){
+            int errorcode = parseErrorCode(receiver);
+            //parse errmsg
+            std::string errMsg = parseErrMsg(receiver,BytesReceived);
+            std::cout
+                << "Received TFTP ERROR packet. Error code " << errorcode << std::endl;
+            std::cout << "Error msg: " << errMsg << std::endl;
+
+            exit(0);
+        }
 
         int block = parseBlockNumber(receiver);
 
