@@ -1,7 +1,10 @@
 //
 // Created by B Pan on 1/15/24.
 //
-
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <string>
 #include <cstdio>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -12,6 +15,8 @@
 #include "TftpError.h"
 #include "TftpOpcode.h"
 #include "TftpConstant.h"
+
+
 
 // To track how retransmit/retry has occurred.
 static int retryCount = 0;
@@ -56,3 +61,106 @@ static int registerTimeoutHandler( ){
  * sending bytes, receiving bytes, parse opcode from a tftp packet, parse data block/ack number from a tftp packet,
  * create a data block/ack packet, and the common "process the file transfer" logic.
  */
+// get the file bytes
+static size_t getfilesize(const char *filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+    {
+        // std::cerr << "Error opening file!" << std::endl;
+        return -1;
+    }
+    file.seekg(0, std::ios::end);
+    long filesize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    file.close();
+
+    return filesize;
+}
+
+// helper function to parse opcode from the packet
+static uint16_t parseOpcode(const char *buffer)
+{
+    uint16_t opcode;
+    memcpy(&opcode, buffer, sizeof(uint16_t));
+    opcode = ntohs(opcode); // Convert from network byte order to host byte order
+    // std::cout << "Opcode: " << opcode << std::endl;
+    return opcode;
+}
+
+// static char *parseData(const char *buffer, long bytes) // extract data from Packet
+// {
+//     if(bytes < 512) {
+//         char *last_data_buffer = new char[bytes];
+//         std::memcpy(last_data_buffer, buffer, bytes);
+//         return last_data_buffer;
+//     }
+
+//     // Create data buffer to store the data
+//     char *data_buffer = new char[bytes];
+//     std::memcpy(data_buffer, buffer, bytes);
+
+//     return data_buffer;
+// }
+
+// // Helper function to parse data block number from a TFTP data packet
+static int parseBlockNumber(const char *buffer)
+{
+    // Parse the blocknumber from the Data packet
+    unsigned short block;
+    memcpy(&block, &buffer[2], sizeof(unsigned short)); // Extract block number
+    block = ntohs(block);
+
+    return block;
+}
+
+// Helper function to parse Ack number from a TFTP ACK packet
+static int parseAckNumber(const char *buffer)
+{
+    // Parse the blocknumber from the Data packet
+    unsigned short ack;
+    memcpy(&ack, &buffer[2], sizeof(unsigned short)); // Extract ack num
+    ack = ntohs(ack);
+
+    return ack;
+}
+// Helper function to create a TFTP Data packet
+static void createDataPacket(char *buffer, unsigned short blockNumber, size_t bytes, char *Pos)
+{
+
+    char *bpt = buffer;                                  // point to the beginning of the buffer
+    unsigned short *opCode = (unsigned short *)bpt;      // opCode points to the beginning of the buffer
+    *opCode = htons(TFTP_DATA);                          // fill in op code for packet.
+    unsigned short *block = (unsigned short *)(bpt + 2); // move bpt towards right by 2 bytes
+    *block = htons(blockNumber);                         // fill in block number
+    bpt = bpt + 4;                                       // pointer to the beginning of the actual file data
+    std::memcpy(bpt, Pos, bytes);
+    bpt += bytes;
+    // file.close();
+}
+
+// // Helper function to create a TFTP ACK packet
+static void createAckPacket(uint16_t opcode, int blockNumber, char *buffer)
+{
+    // char Ackbuffer[TFTP_ACK];
+    char *bpt = buffer;
+    unsigned short *opCode = (unsigned short *)bpt;
+    *opCode = htons(TFTP_ACK); // Change the Opcode as ACK type
+    bpt += 2;                  // now points to block field
+    unsigned short *block = (unsigned short *)bpt;
+    *block = htons(blockNumber);
+    opcode = TFTP_ACK;
+}
+
+static void writeFile(const std::string &filename, char (&filebuffer)[MAX_PACKET_LEN], const int &num_bytes_recv)
+{
+    std::ofstream outputFile(filename, std::ios::app | std::ios::out | std::ios::binary);
+    outputFile.write(filebuffer + 4, num_bytes_recv - 4);
+    outputFile.close();
+}
+
+// static long FetchBytes(const char *buffer, long bytes)
+// {
+//     return static_cast<long>(bytes);
+// }
