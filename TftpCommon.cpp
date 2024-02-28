@@ -17,7 +17,6 @@
 #include "TftpConstant.h"
 
 
-
 // To track how retransmit/retry has occurred.
 static int retryCount = 0;
 

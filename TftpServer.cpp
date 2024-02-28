@@ -49,13 +49,11 @@ int handleIncomingRequest(int sockfd) {
          * Create the 1st response packet, send it to the client.
          */
         uint16_t opcode = parseOpcode(buffer);
-        // std::cout << "Opcode: " << opcode << std::endl;
+        //std::cout << "Opcode: " << opcode << std::endl;
 
         // Check if it's an RRQ or WRQ
         if (opcode == TFTP_RRQ)
         {
-
-            // std::cout << "Confirme received Read Request (RRQ)\n" << std::endl;
 
             // Extract filename and mode from the packet
             char filename[255];
@@ -65,16 +63,37 @@ int handleIncomingRequest(int sockfd) {
 
             // Print the extracted filename and mode
             std::cout << "Requested filename is: " << filename << std::endl;
-            //std::cout << "Mode: " << mode << std::endl;            
-            
-            int packet = 1;
-            unsigned short blockNumber = 1;
-            char Data_buffer[MAX_PACKET_LEN];
+            //std::cout << "Mode: " << mode << std::endl;
+                        
             // creating full path
             std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
             //std::cout << "Full path: " << filePath << std::endl;            
             std::ifstream file(filePath, std::ios::binary);
+            char ErrorMsgbuffer[MAX_PACKET_LEN];
+            unsigned short errorcode = 1;
+            bool error = false;
+            if (access(filePath.c_str(), F_OK) == -1) //does not exist
+            {
+                // File does not exist
+                std::cout << "File does not exist!" << std::endl;
+                const char *errorMessage = "File does not exist: ";
+                error = true;
+                size_t errorMsgLength = strlen(errorMessage);
+                const size_t filePathLength = filePath.size();
+                const size_t totalLength = errorMsgLength + filePathLength + 1;
+                strncpy(ErrorMsgbuffer + 4, errorMessage, errorMsgLength);
+                strncpy(ErrorMsgbuffer + 4 + errorMsgLength + 1, filePath.c_str(), filePathLength);
+                ErrorMsgbuffer[4 + errorMsgLength + filePathLength + 1] = '\0'; // Null-terminate the string
+                createErrorPacket(ErrorMsgbuffer, errorcode, totalLength);
+                size_t BytesSend = sendto(sockfd, ErrorMsgbuffer, 4 + totalLength + 1, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+                // printBuffer(ErrorMsgbuffer, MAX_PACKET_LEN);
+                // std::string errMsg = parseErrMsg(ErrorMsgbuffer, BytesSend);
+                // std::cout << "Error msg: " << errMsg << std::endl;
+            } else {
 
+            int packet = 1;
+            unsigned short blockNumber = 1;
+            char Data_buffer[MAX_PACKET_LEN];
             while (true)
             {
                 file.read(Data_buffer + 4, MAX_PACKET_LEN - 4);
@@ -94,6 +113,7 @@ int handleIncomingRequest(int sockfd) {
                     break;
                 }
             }
+          } //else statment end
         }
         else if (opcode == TFTP_WRQ)
         {
@@ -104,13 +124,13 @@ int handleIncomingRequest(int sockfd) {
             std::cout << "Requested filename is: " << filename << std::endl;
             //  Check the filename first to see if it is already existed in the path
             std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
-            std::cout << "Full path: " << filePath << std::endl;
+            //std::cout << "Full path: " << filePath << std::endl;
             
             char ErrorMsgbuffer[MAX_PACKET_LEN];
             unsigned short errorcode = 6;
             bool error = false;
             if(access(filePath.c_str(),F_OK) != -1){
-                // File already exists, handle accordingly
+                // File already exists
                 std::cout << "File already exists!" << std::endl;
                 const char *errorMessage = "File already exists: ";
                 error = true;
@@ -190,13 +210,26 @@ int handleIncomingRequest(int sockfd) {
                 << "Received Ack "
                 << "#" << block << std::endl;
         }
-        else
+        else //illegal opcode handler
         {
-            std::cout << "Invalid opCode" << TFTP_ERROR_INVALID_OPCODE << std::endl;
-            uint16_t opcode;
-            memcpy(&opcode, buffer, sizeof(uint16_t));
-            opcode = ntohs(opcode); // Convert from network byte order to host byte order
-            printf("Received opcode: %d\n", opcode);
+            char filename[255];
+            char mode[10];
+            strncpy(filename, buffer + 2, 255);
+            strncpy(mode, buffer + 2 + strlen(filename) + 1, 10);
+            std::cout << "Requested filename is: " << filename << std::endl;
+            char ErrorMsgbuffer[MAX_PACKET_LEN];
+            unsigned short errorcode = 4;
+    
+            std::cout << "Received illegal opcode: " << opcode << std::endl;
+            const char *errorMessage = "Illegal Opcode!";
+            size_t errorMsgLength = strlen(errorMessage);
+            strncpy(ErrorMsgbuffer + 4, errorMessage, errorMsgLength);
+            ErrorMsgbuffer[4 + errorMsgLength + 1] = '\0'; // Null-terminate the string
+            createErrorPacket(ErrorMsgbuffer, errorcode, errorMsgLength);
+            size_t BytesSend = sendto(sockfd, ErrorMsgbuffer, 4 + errorMsgLength + 1, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+            // printBuffer(ErrorMsgbuffer, MAX_PACKET_LEN);
+            // std::string errMsg = parseErrMsg(ErrorMsgbuffer, BytesSend);
+            // std::cout << "Error msg: " << errMsg << std::endl;
         }
         /*
          * TODO: process the file transfer

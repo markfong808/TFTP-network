@@ -153,13 +153,41 @@ int main(int argc, char *argv[]) {
 
         // send WRQ to server
         ssize_t num_bytes_sent = sendto(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+        
     }
-    /*
-     * TODO: process the file transfer
-     */
-    std::cout << "Processing tftp request..." << std::endl;
+    else if (strcmp(request, "r") != 0 && strcmp(request, "w") != 0)
+    {
+        char buffer[MAX_PACKET_LEN];                    // tftp request packet (RRQ or WRQ)
+        char *bpt = buffer;                             // point to the beginning of the buffer
+        unsigned short *opCode = (unsigned short *)bpt; // opCode points to the beginning of the buffer
+        *opCode = htons(TFTP_ERROR);                    // fill in op code for packet.
+        bpt += 2;
+        char sent_filename[255];
+        size_t filenameLength = strlen(filename);
+        // std::cout << "Requested filename: " << filename << std::endl;
+        strcpy(sent_filename, filename); // put the requested file name into the request buffer
+        // std::cout << "Filename length: " << filenameLength << std::endl;
+        strncpy(bpt, sent_filename, filenameLength);
+        bpt[filenameLength] = '\0'; // null terminator to mark the end
+        bpt += filenameLength;
+        // printBuffer(buffer,MAX_PACKET_LEN);
+        bpt += 1;
+        const char *mode = "octet";
+        char modeArray[10];
+        size_t modeLength = strlen(mode);
+        strcpy(modeArray, mode);
+        strncpy(bpt, modeArray, modeLength);
+        bpt += strlen(mode) + 1; // Add 1 for the null terminator
+        bpt[modeLength] = '\0';  // null terminator to mark the end
 
-    #define MAX_DATA_SIZE 512
+        ssize_t num_bytes_sent = sendto(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+    }
+        /*
+         * TODO: process the file transfer
+         */
+        std::cout << "Processing tftp request..." << std::endl;
+
+#define MAX_DATA_SIZE 512
     bool last_packet_received = false;
     bool last_packet_sent = false;
     char receiver[MAX_PACKET_LEN]; // receive to store the incoming data
@@ -235,7 +263,7 @@ int main(int argc, char *argv[]) {
         } // while loop end
     }
     else if (*request == 'r')
-    { // RRQ
+    { // RRQ   
         size_t BytesReceived = 0;
         for (;;)
         {
@@ -263,6 +291,18 @@ int main(int argc, char *argv[]) {
                 // printBuffer(Ackbuffer,TFTP_ACK);
                 sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
             }
+            else if (opcode == TFTP_ERROR)
+            {
+                    int errorcode = parseErrorCode(receiver);
+                    // parse errmsg
+                    std::string errMsg = parseErrMsg(receiver, BytesReceived);
+                    std::cout
+                        << "Received TFTP ERROR packet. Error code " << errorcode << std::endl;
+                    std::cout << "Error msg: " << errMsg << std::endl;
+
+                    exit(0);
+            }
+            
 
             if (BytesReceived - 4 < MAX_DATA_SIZE)
             {
@@ -279,12 +319,23 @@ int main(int argc, char *argv[]) {
                 break;
             }
         }
-    } // else statement end
+    } else {
+        size_t BytesReceived = recvfrom(sockfd, receiver, MAX_PACKET_LEN, 0, (struct sockaddr *)&serv_addr, &serv_addrlen);
+        //printBuffer(receiver, sizeof(receiver));
+        uint16_t opcode = parseOpcode(receiver);
 
-    //  if (last_packet_sent)
-    // {
-    //    break;
-    //  }
+        if (opcode == TFTP_ERROR)
+        {
+            int errorcode = parseErrorCode(receiver);
+            // parse errmsg
+            std::string errMsg = parseErrMsg(receiver, BytesReceived);
+            std::cout
+                << "Received TFTP ERROR packet. Error code " << errorcode << std::endl;
+            std::cout << "Error msg: " << errMsg << std::endl;
+
+            exit(0);
+        }
+    }
     /*
      * TODO: Don't forget to close any file that was opened for read/write, close the socket, free any
      * dynamically allocated memory, and necessary clean up.
