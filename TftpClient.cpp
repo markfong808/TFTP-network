@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
                 std::cout
                     << "Received block "
                     << "#" << block << std::endl;
-                printBuffer(receiver, MAX_PACKET_LEN);
+                //printBuffer(receiver, MAX_PACKET_LEN);
 
                 std::string filePath = std::string(CLIENT_FOLDER) + std::string(filename);
                 writeFile(filePath, receiver, BytesReceived);
@@ -310,8 +310,8 @@ int main(int argc, char *argv[]) {
                 std::cout << "This is the last packet." << std::endl; // detect last packet
             }
 
-            std::cout << "Bytesafter." << BytesReceived << std::endl;
-            std::cout << "lastpack bool: " << std::boolalpha << last_packet_received << std::endl;
+            std::cout << "Bytesafter: " << BytesReceived << std::endl;
+            std::cout << "last packet flag: " << std::boolalpha << last_packet_received << std::endl;
 
             if (last_packet_received)
             {
