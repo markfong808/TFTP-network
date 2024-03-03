@@ -265,6 +265,7 @@ int main(int argc, char *argv[]) {
     else if (*request == 'r')
     { // RRQ   
         size_t BytesReceived = 0;
+        int block_n = 1;
         for (;;)
         {
             size_t BytesReceived = recvfrom(sockfd, receiver, MAX_PACKET_LEN, 0, (struct sockaddr *)&serv_addr, &serv_addrlen);
@@ -281,15 +282,26 @@ int main(int argc, char *argv[]) {
                     << "Received block "
                     << "#" << block << std::endl;
                 //printBuffer(receiver, MAX_PACKET_LEN);
+               
+               if(block == block_n){// make sure both side block num is identical 
+                   std::string filePath = std::string(CLIENT_FOLDER) + std::string(filename);
+                   writeFile(filePath, receiver, BytesReceived);
+                   block_n++;
 
-                std::string filePath = std::string(CLIENT_FOLDER) + std::string(filename);
-                writeFile(filePath, receiver, BytesReceived);
-
-                // send ACK check for received block
-                char Ackbuffer[TFTP_ACK];
-                createAckPacket(opcode, block, Ackbuffer);
-                // printBuffer(Ackbuffer,TFTP_ACK);
-                sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+                   // send ACK check for received block
+                   char Ackbuffer[TFTP_ACK];
+                   createAckPacket(opcode, block_n, Ackbuffer);
+                   // printBuffer(Ackbuffer,TFTP_ACK);
+                   sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+                   
+               } else { //duplicated data packet
+                
+                   char Ackbuffer[TFTP_ACK];
+                   createAckPacket(opcode, block, Ackbuffer);
+                   // printBuffer(Ackbuffer,TFTP_ACK);
+                   sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+                   continue;
+               }
             }
             else if (opcode == TFTP_ERROR)
             {

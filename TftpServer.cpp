@@ -59,7 +59,7 @@ int handleIncomingRequest(int sockfd) {
                //break;
             }
          } else {
-            
+            //data ready to transmit
          
          
         /*
