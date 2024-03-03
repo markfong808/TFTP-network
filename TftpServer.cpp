@@ -180,6 +180,8 @@ int handleIncomingRequest(int sockfd) {
             char receiver[MAX_PACKET_LEN]; // receive to store the incoming data
             #define MAX_DATA_SIZE 512
             size_t BytesReceived = 0;
+            int block_n = 1;
+
             for (;;)
             {
                 do
@@ -199,15 +201,33 @@ int handleIncomingRequest(int sockfd) {
                             << "Received block "
                             << "#" << block << std::endl;
                         // printBuffer(receiver, MAX_PACKET_LEN);
+                        
+                        if(block == block_n){
+                            std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
+                            writeFile(filePath, receiver, BytesReceived);
+                            block_n++;
+                            // send ACK check for received block
+                            char Ackbuffer[TFTP_ACK];
+                            createAckPacket(opcode, block, Ackbuffer);
+                            // printBuffer(Ackbuffer,TFTP_ACK);
+                            sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+                        } else {
+                            // send ACK check for received block
+                            char Ackbuffer[TFTP_ACK];
+                            createAckPacket(opcode, block, Ackbuffer);
+                            // printBuffer(Ackbuffer,TFTP_ACK);
+                            sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+                            continue;
+                        }
 
-                        std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
-                        writeFile(filePath, receiver, BytesReceived);
+                        // std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
+                        // writeFile(filePath, receiver, BytesReceived);
 
                         // send ACK check for received block
-                        char Ackbuffer[TFTP_ACK];
-                        createAckPacket(opcode, block, Ackbuffer);
-                        // printBuffer(Ackbuffer,TFTP_ACK);
-                        sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
+                        // char Ackbuffer[TFTP_ACK];
+                        // createAckPacket(opcode, block, Ackbuffer);
+                        // // printBuffer(Ackbuffer,TFTP_ACK);
+                        // sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
                     }
 
                     if (BytesReceived - 4 < MAX_DATA_SIZE)
