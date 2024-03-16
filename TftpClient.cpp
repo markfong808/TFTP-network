@@ -1,8 +1,5 @@
-//
-// Created by B Pan on 12/3/23.
-//
 
-//TFTP client program - CSS 432 - Winter 2024
+//TFTP client program 
 
 #include <cstdio>
 #include <iostream>
@@ -38,7 +35,7 @@ int main(int argc, char *argv[]) {
 
     /*
      * TODO: initialize server and client address, create socket and bind socket as you did in
-     * programming assignment 1
+     * programming assignment 
      */
     // 1.Fill in serv_addr
     serv_addr.sin_family = AF_INET;
@@ -244,7 +241,7 @@ int main(int argc, char *argv[]) {
             pos += bytesRead;
             block++;
 
-            // listen for ack check
+            // listen for ackowledge check
             char Rec_Ackbuffer[TFTP_ACK];
             recvfrom(sockfd, Rec_Ackbuffer, sizeof(Rec_Ackbuffer), 0, (struct sockaddr *)&serv_addr, &serv_addrlen);
             // printBuffer(Rec_Ackbuffer, TFTP_ACK);
@@ -354,4 +351,4 @@ int main(int argc, char *argv[]) {
     close(sockfd);
 
     exit(0);
-} // main end
+} 

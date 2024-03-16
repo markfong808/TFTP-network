@@ -1,6 +1,3 @@
-//
-// Created by B Pan on 1/15/24.
-//
 #include <cstring>
 #include <iostream>
 #include <fstream>
@@ -88,24 +85,9 @@ static uint16_t parseOpcode(const char *buffer)
     return opcode;
 }
 
-// static char *parseData(const char *buffer, long bytes) // extract data from Packet
-// {
-//     if(bytes < 512) {
-//         char *last_data_buffer = new char[bytes];
-//         std::memcpy(last_data_buffer, buffer, bytes);
-//         return last_data_buffer;
-//     }
-
-//     // Create data buffer to store the data
-//     char *data_buffer = new char[bytes];
-//     std::memcpy(data_buffer, buffer, bytes);
-
-//     return data_buffer;
-// }
 
 static std::string parseErrMsg(const char (&buffer)[MAX_PACKET_LEN], const int &num_bytes_recv)
 {
-    //(buffer + 4, num_bytes_recv - 4);
     return std::string(buffer + 4, num_bytes_recv - 4);
 }
 
@@ -188,7 +170,4 @@ static std::string parseErrMsg(const char (&buffer)[MAX_PACKET_LEN], const int &
         bpt += strlen(buffer) + 1;
     }
 
-    // static long FetchBytes(const char *buffer, long bytes)
-    // {
-    //     return static_cast<long>(bytes);
-    // }
+

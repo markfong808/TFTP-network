@@ -1,8 +1,5 @@
-//
-// Created by B Pan on 12/3/23.
-//
 //for system calls, please refer to the MAN pages help in Linux
-//TFTP server program over udp - CSS432 - winter 2024
+//TFTP server program over udp - CSS432 
 #include <cstdio>
 #include <iostream>
 #include <sys/socket.h>
@@ -137,7 +134,7 @@ int handleIncomingRequest(int sockfd) {
                 }
             }
             
-          } //else statment end
+          } 
         }
         else if (opcode == TFTP_WRQ)
         {
@@ -220,14 +217,6 @@ int handleIncomingRequest(int sockfd) {
                             continue;
                         }
 
-                        // std::string filePath = std::string(SERVER_FOLDER) + std::string(filename);
-                        // writeFile(filePath, receiver, BytesReceived);
-
-                        // send ACK check for received block
-                        // char Ackbuffer[TFTP_ACK];
-                        // createAckPacket(opcode, block, Ackbuffer);
-                        // // printBuffer(Ackbuffer,TFTP_ACK);
-                        // sendto(sockfd, Ackbuffer, sizeof(Ackbuffer), 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
                     }
 
                     if (BytesReceived - 4 < MAX_DATA_SIZE)
@@ -241,8 +230,8 @@ int handleIncomingRequest(int sockfd) {
                 {
                     break;
                 }
-            } //infinite loop end
-          } //else statement end
+            } 
+          } 
         }
         else if (opcode == TFTP_ACK)
         {
@@ -269,16 +258,14 @@ int handleIncomingRequest(int sockfd) {
             ErrorMsgbuffer[4 + errorMsgLength + 1] = '\0'; // Null-terminate the string
             createErrorPacket(ErrorMsgbuffer, errorcode, errorMsgLength);
             size_t BytesSend = sendto(sockfd, ErrorMsgbuffer, 4 + errorMsgLength + 1, 0, (struct sockaddr *)&cli_addr, sizeof(cli_addr));
-            // printBuffer(ErrorMsgbuffer, MAX_PACKET_LEN);
-            // std::string errMsg = parseErrMsg(ErrorMsgbuffer, BytesSend);
-            // std::cout << "Error msg: " << errMsg << std::endl;
+            
         }
         
      retryCount = 0; //reset the retry count
      
      } //else statment for timer > 0 
 
-  } // big infinite forloop end
+  } 
 } // handle incoming request function end
 
 int main(int argc, char *argv[]) {
